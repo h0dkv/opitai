@@ -3,31 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Готварски хаос: Българска Кухня</title>
+    <title>Готварски хаос: Мая в Кухнята</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
 </head>
 <body>
 
     <div id="game-container">
-        <!-- Горна лента с информация -->
+        <!-- Горна HUD Лента -->
         <div id="hud">
-            <div>ТОЧКИ: <span id="score">0</span></div>
-            <div>ВРЕМЕ: <span id="timer">60</span>s</div>
+            <div class="hud-box">
+                <span class="hud-label">ТОЧКИ</span>
+                <span id="score" class="hud-value">0</span>
+            </div>
+            <div class="hud-box">
+                <span class="hud-label">ВРЕМЕ</span>
+                <span id="timer" class="hud-value">60s</span>
+            </div>
         </div>
 
-        <!-- Зона за поръчки на клиенти -->
-        <div id="orders-bar">
-            <!-- Динамични поръчки с таймери -->
-        </div>
-
-        <!-- Кухня (Canvas) -->
+        <!-- Работно поле / Canvas -->
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Меню / Краен екран -->
+        <!-- Долна UI Зона: Поръчки + Бутон за изхвърляне -->
+        <div id="bottom-gui">
+            <div class="gui-section-title">АКТИВНИ ПОРЪЧКИ</div>
+            <div id="orders-bar"></div>
+            <button id="trash-gui-btn" class="gui-btn">🗑️ Хвърли държаното</button>
+        </div>
+
+        <!-- UI Овърлей (Начало, Зареждане, Поздрав, Игра свърши) -->
         <div id="ui-overlay">
-            <h1 id="title">ГОТВАРСКИ ХАОС</h1>
-            <p id="subtitle">Приготвяй мусака, таратор, запеканка и айрян!<br>Внимавай: храната във фурната загаря, а клиентите губят търпение!</p>
-            <button id="start-btn">СТАРТИРАЙ</button>
+            
+            <div id="screen-start" class="screen-content active">
+                <h1 class="glow-title">ГОТВАРСКИ ХАОС</h1>
+                <p class="subtitle">Време е за готвене! Готова ли си за предизвикателството?</p>
+                <button id="main-start-btn" class="action-btn glow-btn">НАЧАЛО</button>
+            </div>
+
+            <div id="screen-loading" class="screen-content">
+                <div class="spinner"></div>
+                <p class="loading-text">Зареждане на кухнята...</p>
+            </div>
+
+            <div id="screen-greeting" class="screen-content">
+                <h1 class="greeting-text animate-pop">Здрасти, Мая! 👋</h1>
+                <p class="subtitle animate-fade">Клиентите те чакат. Успех!</p>
+                <button id="play-btn" class="action-btn glow-btn animate-fade">КЪМ КУХНЯТА 🍳</button>
+            </div>
+
+            <div id="screen-gameover" class="screen-content">
+                <h1 class="glow-title">ВРЕМЕТО ИЗТЕЧЕ!</h1>
+                <p id="final-score-text" class="subtitle">Резултат: 0 точки</p>
+                <button id="restart-btn" class="action-btn glow-btn">ИГРАЙ ПАК</button>
+            </div>
+
         </div>
     </div>
 

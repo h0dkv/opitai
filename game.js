@@ -1,31 +1,64 @@
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
 const uiOverlay = document.getElementById('ui-overlay');
-const startBtn = document.getElementById('start-btn');
-const titleEl = document.getElementById('title');
-const subtitleEl = document.getElementById('subtitle');
+const screenStart = document.getElementById('screen-start');
+const screenLoading = document.getElementById('screen-loading');
+const screenGreeting = document.getElementById('screen-greeting');
+const screenGameOver = document.getElementById('screen-gameover');
+
+const mainStartBtn = document.getElementById('main-start-btn');
+const playBtn = document.getElementById('play-btn');
+const restartBtn = document.getElementById('restart-btn');
+const trashGuiBtn = document.getElementById('trash-gui-btn');
+
 const scoreEl = document.getElementById('score');
 const timerEl = document.getElementById('timer');
 const ordersBar = document.getElementById('orders-bar');
+const finalScoreText = document.getElementById('final-score-text');
 
 function resizeCanvas() {
     canvas.width = canvas.parentElement.clientWidth;
     canvas.height = canvas.parentElement.clientHeight;
+    repositionStations();
 }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
 
-let gameState = 'START';
+let gameState = 'MENU';
 let score = 0;
 let timeLeft = 60;
 let timerInterval = null;
 let orders = [];
 
-// Готвач (Играч)
+function showScreen(screen) {
+    [screenStart, screenLoading, screenGreeting, screenGameOver].forEach(s => s.classList.remove('active'));
+    screen.classList.add('active');
+}
+
+mainStartBtn.addEventListener('click', () => {
+    showScreen(screenLoading);
+    setTimeout(() => {
+        showScreen(screenGreeting);
+    }, 1500);
+});
+
+playBtn.addEventListener('click', () => {
+    uiOverlay.style.display = 'none';
+    startGame();
+});
+
+restartBtn.addEventListener('click', () => {
+    showScreen(screenLoading);
+    setTimeout(() => {
+        showScreen(screenGreeting);
+        uiOverlay.style.display = 'flex';
+    }, 1000);
+});
+
+// Готвач
 const chef = {
     x: 0,
     y: 0,
-    size: 25,
+    size: 22,
     holding: null,
 
     draw() {
@@ -34,24 +67,24 @@ const chef = {
 
         ctx.beginPath();
         ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-        ctx.fillStyle = '#2196f3';
+        ctx.fillStyle = '#38bdf8';
         ctx.fill();
         ctx.lineWidth = 3;
-        ctx.strokeStyle = '#0d47a1';
+        ctx.strokeStyle = '#0284c7';
         ctx.stroke();
 
         ctx.beginPath();
-        ctx.arc(0, -5, 12, 0, Math.PI * 2);
+        ctx.arc(0, -5, 11, 0, Math.PI * 2);
         ctx.fillStyle = '#ffffff';
         ctx.fill();
 
         if (this.holding) {
             ctx.beginPath();
-            ctx.arc(18, 0, 10, 0, Math.PI * 2);
+            ctx.arc(16, 0, 9, 0, Math.PI * 2);
             ctx.fillStyle = getItemColor(this.holding);
             ctx.fill();
-            ctx.lineWidth = 1.5;
-            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#ffffff';
             ctx.stroke();
         }
 
@@ -59,22 +92,34 @@ const chef = {
     }
 };
 
-// Станции
-const stations = [
-    { id: 'mince', name: 'Кайма', x: 15, y: 20, w: 60, h: 45, color: '#a52a2a' },
-    { id: 'potato', name: 'Картофи', x: 85, y: 20, w: 60, h: 45, color: '#e3c16f' },
-    { id: 'topping', name: 'Заливка', x: 155, y: 20, w: 60, h: 45, color: '#fff8dc' },
-    { id: 'cucumber', name: 'Краставица', x: 225, y: 20, w: 60, h: 45, color: '#4caf50' },
-    { id: 'yogurt', name: 'Кисело мляко', x: 295, y: 20, w: 60, h: 45, color: '#f5f5f5' },
-    { id: 'cheese', name: 'Сирене', x: 365, y: 20, w: 60, h: 45, color: '#fffde7' },
+let stations = [];
 
-    { id: 'prep', name: 'Плот (Тава)', x: 30, y: 160, w: 90, h: 70, color: '#9e9e9e', contents: [] },
-    { id: 'oven', name: 'Фурна', x: 140, y: 160, w: 90, h: 70, color: '#ff5722', state: 'empty', timer: 0, content: null },
-    { id: 'ayran_machine', name: 'Айрян Машина', x: 250, y: 160, w: 85, h: 70, color: '#00bcd4', state: 'empty', timer: 0 },
-    { id: 'trash', name: 'Кош', x: 350, y: 160, w: 75, h: 70, color: '#757575' },
+function repositionStations() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const btnW = (w - 40) / 3;
+    const btnH = 45;
 
-    { id: 'serve', name: 'ИЗДАВАНЕ НА ПОРЪЧКА', x: 120, y: 340, w: 180, h: 60, color: '#2e7d32' }
-];
+    stations = [
+        { id: 'mince', name: '🥩 Кайма', x: 10, y: 15, w: btnW, h: btnH, color: '#334155', isIngredient: true },
+        { id: 'potato', name: '🥔 Картофи', x: 20 + btnW, y: 15, w: btnW, h: btnH, color: '#334155', isIngredient: true },
+        { id: 'topping', name: '🥣 Заливка', x: 30 + btnW*2, y: 15, w: btnW, h: btnH, color: '#334155', isIngredient: true },
+        
+        { id: 'cucumber', name: '🥒 Краставица', x: 10, y: 70, w: btnW, h: btnH, color: '#334155', isIngredient: true },
+        { id: 'yogurt', name: '🥛 К. Мляко', x: 20 + btnW, y: 70, w: btnW, h: btnH, color: '#334155', isIngredient: true },
+        { id: 'cheese', name: '🧀 Сирене', x: 30 + btnW*2, y: 70, w: btnW, h: btnH, color: '#334155', isIngredient: true },
+
+        { id: 'prep', name: '🍳 Плот (Тава)', x: 15, y: 140, w: (w - 40)/2, h: 65, color: '#475569', contents: [] },
+        { id: 'oven', name: '🔥 Фурна', x: 25 + (w - 40)/2, y: 140, w: (w - 40)/2, h: 65, color: '#ea580c', state: 'empty', timer: 0, content: null },
+        { id: 'ayran_machine', name: '🥤 Айрян', x: 15, y: 220, w: (w - 40)/2, h: 60, color: '#0284c7', state: 'empty', timer: 0 },
+        { id: 'trash', name: '🗑️ Кош', x: 25 + (w - 40)/2, y: 220, w: (w - 40)/2, h: 60, color: '#334155' },
+
+        { id: 'serve', name: '🛎️ СЕРВИРАЙ ПОРЪЧКА', x: 15, y: h - 60, w: w - 30, h: 50, color: '#059669' }
+    ];
+}
+
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
 
 const RECIPES = [
     { name: 'Мусака', req: ['кайма', 'картофи', 'заливка'], needsOven: true, rawResult: 'мусака_сурова', cookedResult: 'мусака_печена' },
@@ -85,19 +130,19 @@ const RECIPES = [
 
 function getItemColor(item) {
     switch(item) {
-        case 'кайма': return '#a52a2a';
-        case 'картофи': return '#e3c16f';
-        case 'заливка': return '#fff8dc';
-        case 'краставица': return '#4caf50';
-        case 'кисело мляко': return '#ffffff';
-        case 'сирене': return '#fffde7';
-        case 'мусака_сурова': return '#d7ccc8';
-        case 'мусака_печена': return '#d84315';
-        case 'запеканка_сурова': return '#fff9c4';
-        case 'запеканка_печена': return '#fbc02d';
-        case 'таратор': return '#e8f5e9';
-        case 'айрян': return '#e0f7fa';
-        case 'загаряне': return '#212121';
+        case 'кайма': return '#9f1239';
+        case 'картофи': return '#ca8a04';
+        case 'заливка': return '#fef08a';
+        case 'краставица': return '#16a34a';
+        case 'кисело мляко': return '#f8fafc';
+        case 'сирене': return '#fef9c3';
+        case 'мусака_сурова': return '#cbd5e1';
+        case 'мусака_печена': return '#ea580c';
+        case 'запеканка_сурова': return '#fef08a';
+        case 'запеканка_печена': return '#eab308';
+        case 'таратор': return '#86efac';
+        case 'айрян': return '#38bdf8';
+        case 'загаряне': return '#18181b';
         default: return '#fff';
     }
 }
@@ -105,15 +150,14 @@ function getItemColor(item) {
 function addOrder() {
     if (orders.length >= 3) return;
     const randomRecipe = RECIPES[Math.floor(Math.random() * RECIPES.length)];
-    const newOrder = {
-        id: Date.now(),
+    orders.push({
+        id: Date.now() + Math.random(),
         name: randomRecipe.name,
         targetItem: randomRecipe.cookedResult,
-        reqText: randomRecipe.name === 'Айрян' ? 'Освежаваща напитка' : randomRecipe.req.join(' + '),
-        patience: 100, // 100%
+        reqText: randomRecipe.name === 'Айрян' ? 'Напитка' : randomRecipe.req.join(' + '),
+        patience: 100,
         maxPatience: 100
-    };
-    orders.push(newOrder);
+    });
     renderOrders();
 }
 
@@ -123,9 +167,9 @@ function renderOrders() {
         const card = document.createElement('div');
         card.className = 'order-card';
         const fillPercent = (ord.patience / ord.maxPatience) * 100;
-        let barColor = '#4caf50';
-        if (fillPercent < 50) barColor = '#ff9800';
-        if (fillPercent < 25) barColor = '#f44336';
+        let barColor = '#10b981';
+        if (fillPercent < 50) barColor = '#f59e0b';
+        if (fillPercent < 25) barColor = '#ef4444';
 
         card.innerHTML = `
             <div>
@@ -144,38 +188,36 @@ function renderOrders() {
 function update() {
     if (gameState !== 'PLAYING') return;
 
-    // 1. Логика на фурната (Печене и Загаряне)
+    // Гарантира, че винаги има поне 1 поръчка
+    if (orders.length === 0) {
+        addOrder();
+    }
+
     const oven = stations.find(s => s.id === 'oven');
     if (oven.state === 'cooking') {
         oven.timer += 1;
-        if (oven.timer >= 120) { // Пече се 2 сек.
-            oven.state = 'ready';
-        }
+        if (oven.timer >= 120) oven.state = 'ready';
     } else if (oven.state === 'ready') {
         oven.timer += 1;
-        if (oven.timer >= 320) { // Загаря след още 3.5 сек.
+        if (oven.timer >= 320) {
             oven.state = 'burnt';
             oven.content = 'загаряне';
         }
     }
 
-    // 2. Логика на машината за айрян
     const ayran = stations.find(s => s.id === 'ayran_machine');
     if (ayran.state === 'filling') {
         ayran.timer += 1;
-        if (ayran.timer >= 90) { // 1.5 сек.
-            ayran.state = 'ready';
-        }
+        if (ayran.timer >= 90) ayran.state = 'ready';
     }
 
-    // 3. Търпение на клиентите
     for (let i = orders.length - 1; i >= 0; i--) {
-        orders[i].patience -= 0.15;
+        orders[i].patience -= 0.12;
         if (orders[i].patience <= 0) {
             orders.splice(i, 1);
-            score = Math.max(0, score - 50); // Глоба за изпуснат клиент
+            score = Math.max(0, score - 30);
             scoreEl.textContent = score;
-            setTimeout(addOrder, 2000);
+            setTimeout(addOrder, 1000);
         }
     }
     renderOrders();
@@ -186,50 +228,45 @@ function draw() {
 
     stations.forEach(s => {
         ctx.fillStyle = s.color;
-        ctx.fillRect(s.x, s.y, s.w, s.h);
-        ctx.lineWidth = 2;
-        ctx.strokeStyle = '#333';
-        ctx.strokeRect(s.x, s.y, s.w, s.h);
+        ctx.beginPath();
+        ctx.roundRect(s.x, s.y, s.w, s.h, 10);
+        ctx.fill();
 
-        ctx.fillStyle = (s.id === 'serve' || s.id === 'mince') ? '#fff' : '#000';
-        ctx.font = 'bold 10px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(s.name, s.x + s.w/2, s.y + 16);
+        if (s.isIngredient) {
+            ctx.lineWidth = 1;
+            ctx.strokeStyle = '#475569';
+            ctx.stroke();
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = '600 11px Poppins';
+            ctx.textAlign = 'center';
+            ctx.fillText(s.name, s.x + s.w/2, s.y + s.h/2 + 4);
+        } else {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '600 12px Poppins';
+            ctx.textAlign = 'center';
+            ctx.fillText(s.name, s.x + s.w/2, s.y + 20);
 
-        if (s.id === 'prep') {
-            if (s.contents.length > 0) {
-                ctx.fillText(`(${s.contents.length} съставки)`, s.x + s.w/2, s.y + 40);
-            } else {
-                ctx.fillText('(Свободен)', s.x + s.w/2, s.y + 40);
+            if (s.id === 'prep') {
+                ctx.font = '500 10px Poppins';
+                ctx.fillText(s.contents.length > 0 ? `(${s.contents.length} съставки)` : 'Свободен', s.x + s.w/2, s.y + 42);
             }
-        }
-
-        if (s.id === 'oven') {
-            if (s.state === 'empty') ctx.fillText('(Празна)', s.x + s.w/2, s.y + 42);
-            if (s.state === 'cooking') ctx.fillText('Пече се...', s.x + s.w/2, s.y + 42);
-            if (s.state === 'ready') {
-                ctx.fillStyle = '#ffeb3b';
-                ctx.fillText('ГОТОВО!', s.x + s.w/2, s.y + 42);
+            if (s.id === 'oven') {
+                ctx.font = '500 10px Poppins';
+                if (s.state === 'empty') ctx.fillText('Празна', s.x + s.w/2, s.y + 42);
+                if (s.state === 'cooking') ctx.fillText('Пече...', s.x + s.w/2, s.y + 42);
+                if (s.state === 'ready') ctx.fillText('ГОТОВО!', s.x + s.w/2, s.y + 42);
+                if (s.state === 'burnt') ctx.fillText('ЗАГОРЯ!', s.x + s.w/2, s.y + 42);
             }
-            if (s.state === 'burnt') {
-                ctx.fillStyle = '#ff1744';
-                ctx.fillText('ЗАГОРЯ!', s.x + s.w/2, s.y + 42);
-            }
-        }
-
-        if (s.id === 'ayran_machine') {
-            if (s.state === 'empty') ctx.fillText('[Натисни]', s.x + s.w/2, s.y + 42);
-            if (s.state === 'filling') ctx.fillText('Пълнене...', s.x + s.w/2, s.y + 42);
-            if (s.state === 'ready') {
-                ctx.fillStyle = '#00e676';
-                ctx.fillText('ГОТОВ!', s.x + s.w/2, s.y + 42);
+            if (s.id === 'ayran_machine') {
+                ctx.font = '500 10px Poppins';
+                if (s.state === 'empty') ctx.fillText('[Натисни]', s.x + s.w/2, s.y + 40);
+                if (s.state === 'filling') ctx.fillText('Пълни...', s.x + s.w/2, s.y + 40);
+                if (s.state === 'ready') ctx.fillText('ГОТОВ!', s.x + s.w/2, s.y + 40);
             }
         }
     });
 
-    if (gameState === 'PLAYING') {
-        chef.draw();
-    }
+    if (gameState === 'PLAYING') chef.draw();
 }
 
 function checkPrepMatch(contents) {
@@ -248,34 +285,22 @@ function handleInteraction(x, y) {
     stations.forEach(s => {
         if (x >= s.x && x <= s.x + s.w && y >= s.y && y <= s.y + s.h) {
             
-            // 1. Съставки
-            const ingredientIds = ['mince', 'potato', 'topping', 'cucumber', 'yogurt', 'cheese'];
-            if (ingredientIds.includes(s.id) && !chef.holding) {
-                const map = {
-                    'mince': 'кайма', 'potato': 'картофи', 'topping': 'заливка',
-                    'cucumber': 'краставица', 'yogurt': 'кисело мляко', 'cheese': 'сирене'
-                };
+            const map = { 'mince': 'кайма', 'potato': 'картофи', 'topping': 'заливка', 'cucumber': 'краставица', 'yogurt': 'кисело мляко', 'cheese': 'сирене' };
+            if (map[s.id] && !chef.holding) {
                 chef.holding = map[s.id];
             }
-
-            // 2. Плот
             else if (s.id === 'prep') {
-                const rawIngredients = ['кайма', 'картофи', 'заливка', 'краставица', 'кисело мляко', 'сирене'];
-                if (chef.holding && rawIngredients.includes(chef.holding)) {
-                    if (!s.contents.includes(chef.holding)) {
-                        s.contents.push(chef.holding);
-                        chef.holding = null;
-
-                        const matchedRecipe = checkPrepMatch(s.contents);
-                        if (matchedRecipe) {
-                            s.contents = [];
-                            chef.holding = matchedRecipe.needsOven ? matchedRecipe.rawResult : matchedRecipe.cookedResult;
-                        }
+                const rawIngredients = Object.values(map);
+                if (chef.holding && rawIngredients.includes(chef.holding) && !s.contents.includes(chef.holding)) {
+                    s.contents.push(chef.holding);
+                    chef.holding = null;
+                    const matched = checkPrepMatch(s.contents);
+                    if (matched) {
+                        s.contents = [];
+                        chef.holding = matched.needsOven ? matched.rawResult : matched.cookedResult;
                     }
                 }
             }
-
-            // 3. Фурна
             else if (s.id === 'oven') {
                 if ((chef.holding === 'мусака_сурова' || chef.holding === 'запеканка_сурова') && s.state === 'empty') {
                     s.state = 'cooking';
@@ -288,8 +313,6 @@ function handleInteraction(x, y) {
                     s.content = null;
                 }
             }
-
-            // 4. Машина за айрян
             else if (s.id === 'ayran_machine') {
                 if (s.state === 'empty') {
                     s.state = 'filling';
@@ -299,32 +322,28 @@ function handleInteraction(x, y) {
                     s.state = 'empty';
                 }
             }
-
-            // 5. Кош за боклук
             else if (s.id === 'trash') {
                 chef.holding = null;
-                const prep = stations.find(st => st.id === 'prep');
-                prep.contents = [];
+                stations.find(st => st.id === 'prep').contents = [];
             }
-
-            // 6. Издаване на поръчка
-            else if (s.id === 'serve') {
-                if (chef.holding && orders.length > 0) {
-                    const matchedOrderIndex = orders.findIndex(o => o.targetItem === chef.holding);
-                    if (matchedOrderIndex !== -1) {
-                        const delivered = orders.splice(matchedOrderIndex, 1)[0];
-                        const bonus = delivered.targetItem === 'айрян' ? 50 : 120;
-                        score += bonus;
-                        scoreEl.textContent = score;
-                        chef.holding = null;
-                        renderOrders();
-                        setTimeout(addOrder, 1500);
-                    }
+            else if (s.id === 'serve' && chef.holding && orders.length > 0) {
+                const idx = orders.findIndex(o => o.targetItem === chef.holding);
+                if (idx !== -1) {
+                    const delivered = orders.splice(idx, 1)[0];
+                    score += delivered.targetItem === 'айрян' ? 50 : 120;
+                    scoreEl.textContent = score;
+                    chef.holding = null;
+                    renderOrders();
+                    setTimeout(addOrder, 1000);
                 }
             }
         }
     });
 }
+
+trashGuiBtn.addEventListener('click', () => {
+    chef.holding = null;
+});
 
 window.addEventListener('touchmove', (e) => {
     if (gameState === 'PLAYING' && e.touches.length > 0) {
@@ -355,25 +374,21 @@ function startGame() {
     chef.x = canvas.width / 2;
     chef.y = canvas.height / 2;
 
-    const prep = stations.find(st => st.id === 'prep');
-    prep.contents = [];
-    const oven = stations.find(st => st.id === 'oven');
-    oven.state = 'empty';
-    oven.content = null;
-    const ayran = stations.find(st => st.id === 'ayran_machine');
-    ayran.state = 'empty';
+    stations.find(st => st.id === 'prep').contents = [];
+    stations.find(st => st.id === 'oven').state = 'empty';
+    stations.find(st => st.id === 'ayran_machine').state = 'empty';
 
     scoreEl.textContent = score;
-    timerEl.textContent = timeLeft;
-    uiOverlay.style.display = 'none';
+    timerEl.textContent = timeLeft + 's';
 
+    // Задължително създаване на 2 поръчки при старт
     addOrder();
     addOrder();
 
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
         timeLeft--;
-        timerEl.textContent = timeLeft;
+        timerEl.textContent = timeLeft + 's';
         if (timeLeft <= 0) gameOver();
     }, 1000);
 }
@@ -381,11 +396,9 @@ function startGame() {
 function gameOver() {
     gameState = 'GAMEOVER';
     clearInterval(timerInterval);
-    titleEl.textContent = "ВРЕМЕТО ИЗТЕЧЕ!";
-    subtitleEl.innerHTML = `Резултат: <strong>${score}</strong> точки!`;
-    startBtn.textContent = "ОПИТАЙ ПАК";
+    finalScoreText.textContent = `Резултат: ${score} точки!`;
+    showScreen(screenGameOver);
     uiOverlay.style.display = 'flex';
 }
 
-startBtn.addEventListener('click', startGame);
 gameLoop();
