@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Готварски хаос: Българска Кухня</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Горна лента с информация -->
+        <div id="hud">
+            <div>ТОЧКИ: <span id="score">0</span></div>
+            <div>ВРЕМЕ: <span id="timer">60</span>s</div>
+        </div>
+
+        <!-- Зона за поръчки на клиенти -->
+        <div id="orders-bar">
+            <!-- Динамични поръчки с таймери -->
+        </div>
+
+        <!-- Кухня (Canvas) -->
+        <canvas id="gameCanvas"></canvas>
+
+        <!-- Меню / Краен екран -->
+        <div id="ui-overlay">
+            <h1 id="title">ГОТВАРСКИ ХАОС</h1>
+            <p id="subtitle">Приготвяй мусака, таратор, запеканка и айрян!<br>Внимавай: храната във фурната загаря, а клиентите губят търпение!</p>
+            <button id="start-btn">СТАРТИРАЙ</button>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>
