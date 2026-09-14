@@ -16,28 +16,33 @@
                 <span class="hud-label">ТОЧКИ</span>
                 <span id="score" class="hud-value">0</span>
             </div>
-            <div class="hud-box">
-                <span class="hud-label">ВРЕМЕ</span>
-                <span id="timer" class="hud-value">60s</span>
-            </div>
+            <!-- Бутон със стрелка за рецептите -->
+            <button id="recipes-toggle-btn" class="recipe-btn">📖 Рецепти <span id="arrow-icon">▼</span></button>
         </div>
 
-        <!-- Работно поле / Canvas -->
+        <!-- Падащо меню с рецепти -->
+        <div id="recipes-drawer" class="drawer-hidden">
+            <div class="recipe-item"><strong>🍲 Мусака:</strong> Кайма + Картофи + Заливка ➔ Фурна</div>
+            <div class="recipe-item"><strong>🧀 Запеканка:</strong> Картофи + Сирене + Заливка ➔ Фурна</div>
+            <div class="recipe-item"><strong>🥒 Таратор:</strong> Краставица + К. Мляко (на Плот)</div>
+            <div class="recipe-item"><strong>🥤 Напитки:</strong> Избери от машината за напитки</div>
+        </div>
+
+        <!-- Canvas -->
         <canvas id="gameCanvas"></canvas>
 
-        <!-- Долна UI Зона: Поръчки + Бутон за изхвърляне -->
+        <!-- Долна UI Зона -->
         <div id="bottom-gui">
             <div class="gui-section-title">АКТИВНИ ПОРЪЧКИ</div>
             <div id="orders-bar"></div>
             <button id="trash-gui-btn" class="gui-btn">🗑️ Хвърли държаното</button>
         </div>
 
-        <!-- UI Овърлей (Начало, Зареждане, Поздрав, Игра свърши) -->
+        <!-- UI Овърлей -->
         <div id="ui-overlay">
-            
             <div id="screen-start" class="screen-content active">
                 <h1 class="glow-title">ГОТВАРСКИ ХАОС</h1>
-                <p class="subtitle">Време е за готвене! Готова ли си за предизвикателството?</p>
+                <p class="subtitle">Готова ли си да приготвиш вкусни ястия?</p>
                 <button id="main-start-btn" class="action-btn glow-btn">НАЧАЛО</button>
             </div>
 
@@ -51,13 +56,6 @@
                 <p class="subtitle animate-fade">Клиентите те чакат. Успех!</p>
                 <button id="play-btn" class="action-btn glow-btn animate-fade">КЪМ КУХНЯТА 🍳</button>
             </div>
-
-            <div id="screen-gameover" class="screen-content">
-                <h1 class="glow-title">ВРЕМЕТО ИЗТЕЧЕ!</h1>
-                <p id="final-score-text" class="subtitle">Резултат: 0 точки</p>
-                <button id="restart-btn" class="action-btn glow-btn">ИГРАЙ ПАК</button>
-            </div>
-
         </div>
     </div>
 
